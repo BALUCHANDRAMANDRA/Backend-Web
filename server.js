@@ -21,7 +21,10 @@ const verifyToken = require('./middlewares/verifyToken');
 const app = express();
 
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+    origin: 'https://adminpanel-phi-nine.vercel.app', 
+    credentials: true,
+}));
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -177,7 +180,7 @@ app.post('/create-employee', adminOnly, upload.single('image'), async (req, res)
 });
 
 
-app.get('/get-employees', async (req, res) => {
+app.get('/get-employees',adminOnly, async (req, res) => {
     try {
         const employees = await Employee.find();
         res.status(200).json({ success: true, data: employees });
@@ -308,6 +311,24 @@ app.put('/status/:id', verifyToken, adminOnly, async (req, res) => {
         res.status(500).json({ error: 'Failed to update request' });
     }
 });
+
+
+app.delete('/delete-request/:id', async (req, res) => {
+    const { id } = req.params;
+    console.log("Request ID to delete:", id);  
+    try {
+        const deletedRequest = await Request.findByIdAndDelete(id);
+        if (!deletedRequest) {
+            return res.status(404).json({ message: 'Request not found' });
+        }
+        res.status(200).json({ message: 'Request deleted successfully', deletedRequest });
+    } catch (error) {
+        console.error("Error deleting request:", error);  
+        res.status(500).json({ message: 'Error deleting request', error });
+    }
+});
+
+
 
 app.listen(process.env.PORT, () => {
     console.log("Server is running on port 5050");
